@@ -10,6 +10,6 @@ fun mockApi() =
                 "http://localhost/recent-android-versions",
                 { "Something went wrong on server side" },
                 500,
-                1500
+                1000
             )
     )
