@@ -67,13 +67,15 @@ class ExceptionHandlingViewModel(
                     try {
                         it.await()
                     } catch (e: Exception) {
+                        if (e == CancellationException()) {
+                            throw e
+                        }
                         Timber.e("Error loading feature data")
                         null
                     }
                 }
 
                 uiState.value = UiState.Success(versionFeatures)
-
             }
         }
     }
