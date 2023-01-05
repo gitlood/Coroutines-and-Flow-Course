@@ -11,10 +11,13 @@ fun main() = runBlocking {
                 println("operation number $index")
                 Thread.sleep(100)
             } else {
-                //clean up operations
-                println("Cleaning up")
-                throw CancellationException()
-           //     return@launch
+                withContext(NonCancellable) {
+                    delay(100)
+                    //clean up operations
+                    println("Cleaning up...")
+                    throw CancellationException()
+                    //     return@launch
+                }
             }
         }
 
