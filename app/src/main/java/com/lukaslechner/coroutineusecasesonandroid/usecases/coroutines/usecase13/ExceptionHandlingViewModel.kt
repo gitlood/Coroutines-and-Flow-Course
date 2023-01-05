@@ -3,9 +3,9 @@ package com.lukaslechner.coroutineusecasesonandroid.usecases.coroutines.usecase1
 import androidx.lifecycle.viewModelScope
 import com.lukaslechner.coroutineusecasesonandroid.base.BaseViewModel
 import com.lukaslechner.coroutineusecasesonandroid.mock.MockApi
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import retrofit2.HttpException
+import timber.log.Timber
 
 class ExceptionHandlingViewModel(
     private val api: MockApi = mockApi()
@@ -42,6 +42,39 @@ class ExceptionHandlingViewModel(
     }
 
     fun showResultsEvenIfChildCoroutineFails() {
+        uiState.value = UiState.Loading
 
+        viewModelScope.launch {
+//when exception is propagated up to supervisorScope, supervisorScope doesn't cancel its children or itself
+            supervisorScope {
+                val oreoFeaturesDeferred = async {
+                    api.getAndroidVersionFeatures(27)
+                }
+
+                val pieFeaturesDeferred = async {
+                    api.getAndroidVersionFeatures(28)
+                }
+
+                val android10FeaturesDeferred = async {
+                    api.getAndroidVersionFeatures(29)
+                }
+
+                val versionFeatures = listOf(
+                    oreoFeaturesDeferred,
+                    pieFeaturesDeferred,
+                    android10FeaturesDeferred
+                ).mapNotNull {
+                    try {
+                        it.await()
+                    } catch (e: Exception) {
+                        Timber.e("Error loading feature data")
+                        null
+                    }
+                }
+
+                uiState.value = UiState.Success(versionFeatures)
+
+            }
+        }
     }
 }
