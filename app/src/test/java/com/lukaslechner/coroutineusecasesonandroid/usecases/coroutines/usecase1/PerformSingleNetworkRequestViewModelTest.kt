@@ -2,27 +2,21 @@ package com.lukaslechner.coroutineusecasesonandroid.usecases.coroutines.usecase1
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.lukaslechner.coroutineusecasesonandroid.mock.mockAndroidVersions
-import kotlinx.coroutines.Dispatchers
+import com.lukaslechner.coroutineusecasesonandroid.utils.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
-import org.junit.*
+import org.junit.Assert
+import org.junit.Rule
+import org.junit.Test
 import org.junit.rules.TestRule
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PerformSingleNetworkRequestViewModelTest {
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
-    }
-
-    @After
-    fun tearDown() {
-    }
-
     @get:Rule
     val testInstantTaskExecutorRule: TestRule = InstantTaskExecutorRule()
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     private val receivedUiStates = mutableListOf<UiState>()
 
@@ -47,7 +41,6 @@ class PerformSingleNetworkRequestViewModelTest {
             ),
             receivedUiStates
         )
-        Dispatchers.resetMain()
     }
 
     @Test
