@@ -1,8 +1,11 @@
 package com.lukaslechner.coroutineusecasesonandroid.usecases.flow.usecase2
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.asLiveData
 import com.lukaslechner.coroutineusecasesonandroid.base.BaseViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.*
+import timber.log.Timber
 
 class FlowUseCase2ViewModel(
     stockPriceDataSource: StockPriceDataSource,
@@ -23,5 +26,59 @@ class FlowUseCase2ViewModel(
 
      */
 
-    val currentStockPriceAsLiveData: LiveData<UiState> = TODO()
+    val currentStockPriceAsLiveData: LiveData<UiState> = stockPriceDataSource
+        .latestStockList
+        //7
+        .withIndex()
+        .onEach { indexedValue ->
+            Timber.tag("Flow").d("Processing emission ${indexedValue.index + 1}")
+        }
+        .map { indexedValue ->
+            indexedValue.value
+        }
+        //6
+        .take(10)
+        //1
+        .filter { stockList ->
+            val googlePrice = stockList.find { stock ->
+                stock.name == "Alphabet (Google)"
+            }?.currentPrice ?: return@filter false
+            googlePrice > 2300
+        }
+        //2
+        .map { stockList ->
+            stockList.filter { stock ->
+                stock.country == "United States"
+            }
+        }
+        //4
+        .map { stockList ->
+            stockList.filter { stock ->
+                stock.name != "Apple" &&
+                        stock.name != "Microsoft"
+            }
+        }
+        //3
+        .map { stockList ->
+            stockList.mapIndexed { index, stock ->
+                stock.copy(rank = index + 1)
+            }
+        }
+        //5
+        .map { stockList ->
+            stockList.filter { stock ->
+                stock.rank <= 10
+            }
+        }
+        .map { listOfStocks ->
+            UiState.Success(listOfStocks) as UiState
+        }
+        .onStart {
+            emit(UiState.Loading)
+        }
+        .onCompletion {
+            Timber.tag("Flow").d("Flow has completed.")
+        }
+        //8
+        .asLiveData(defaultDispatcher)
 }
