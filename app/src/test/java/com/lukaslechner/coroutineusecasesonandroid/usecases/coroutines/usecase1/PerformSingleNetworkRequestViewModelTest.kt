@@ -14,6 +14,7 @@ class PerformSingleNetworkRequestViewModelTest {
 
     @Before
     fun setUp() {
+        Dispatchers.setMain(Dispatchers.Unconfined)
     }
 
     @After
@@ -29,7 +30,7 @@ class PerformSingleNetworkRequestViewModelTest {
     fun `should return Success - When network request is successful`() {
 
         //Given
-        Dispatchers.setMain(Dispatchers.Unconfined)
+
         val fakeApi = FakeSuccessApi()
         val viewModel = PerformSingleNetworkRequestViewModel(fakeApi)
 
@@ -46,7 +47,28 @@ class PerformSingleNetworkRequestViewModelTest {
             ),
             receivedUiStates
         )
-Dispatchers.resetMain()
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `should return Error - when network request fails`() {
+
+        //Given
+        val fakeErrorApi = FakeErrorApi()
+        val viewModel = PerformSingleNetworkRequestViewModel(fakeErrorApi)
+        observeViewModel(viewModel)
+
+        //When
+        viewModel.performSingleNetworkRequest()
+
+        //Then
+        Assert.assertEquals(
+            listOf(
+                UiState.Loading,
+                UiState.Error("Network request failed.")
+            ),
+            receivedUiStates
+        )
     }
 
     private fun observeViewModel(viewModel: PerformSingleNetworkRequestViewModel) {
