@@ -6,30 +6,30 @@ import com.lukaslechner.coroutineusecasesonandroid.mock.mockVersionFeaturesPie
 import com.lukaslechner.coroutineusecasesonandroid.utils.ViewModelTestBaseClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@ExperimentalCoroutinesApi
 class PerformNetworkRequestsConcurrentlyViewModelTest : ViewModelTestBaseClass() {
+
     private val receivedUiStates = mutableListOf<UiState>()
 
     @Test
-    fun `performNetworkRequestsSequentially - should load data sequentially`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-
-            //Given
+    fun `performNetworkRequestsSequentially should return data after 3 times the response delay`() =
+        runTest {
             val responseDelay = 1000L
-            val fakeSuccessApi = FakeSuccessApi(responseDelay)
-            val viewModel = PerformNetworkRequestsConcurrentlyViewModel(fakeSuccessApi).apply {
-                observeViewModel()
-            }
+            val fakeApi = FakeSuccessApi(responseDelay)
+            val viewModel = PerformNetworkRequestsConcurrentlyViewModel(fakeApi)
+            viewModel.observe()
 
-            //When
+            Assert.assertTrue(receivedUiStates.isEmpty())
+
             viewModel.performNetworkRequestsSequentially()
+
             advanceUntilIdle()
 
-            //Then
             Assert.assertEquals(
                 listOf(
                     UiState.Loading,
@@ -39,28 +39,33 @@ class PerformNetworkRequestsConcurrentlyViewModelTest : ViewModelTestBaseClass()
                             mockVersionFeaturesPie,
                             mockVersionFeaturesAndroid10
                         )
-                    ),
+                    )
                 ),
                 receivedUiStates
+            )
+
+            // Verify that requests actually got executed sequentially and it took
+            // 3000ms to receive all data
+            Assert.assertEquals(
+                3000,
+                currentTime
             )
         }
 
     @Test
-    fun `performNetworkRequestsConcurrently - should load data concurrently`() =
-        runTest(mainDispatcherRule.testDispatcher) {
-
-            //Given
+    fun `performNetworkRequestsConcurrently should return data after the response delay`() =
+        runTest {
             val responseDelay = 1000L
-            val fakeSuccessApi = FakeSuccessApi(responseDelay)
-            val viewModel = PerformNetworkRequestsConcurrentlyViewModel(fakeSuccessApi).apply {
-                observeViewModel()
-            }
+            val fakeApi = FakeSuccessApi(responseDelay)
+            val viewModel = PerformNetworkRequestsConcurrentlyViewModel(fakeApi)
+            viewModel.observe()
 
-            //When
+            Assert.assertTrue(receivedUiStates.isEmpty())
+
             viewModel.performNetworkRequestsConcurrently()
+
             advanceUntilIdle()
 
-            //Then
             Assert.assertEquals(
                 listOf(
                     UiState.Loading,
@@ -70,15 +75,44 @@ class PerformNetworkRequestsConcurrentlyViewModelTest : ViewModelTestBaseClass()
                             mockVersionFeaturesPie,
                             mockVersionFeaturesAndroid10
                         )
-                    ),
+                    )
+                ),
+                receivedUiStates
+            )
+
+            // Verify that requests actually got executed concurrently within 1000ms
+            Assert.assertEquals(
+                1000,
+                currentTime
+            )
+        }
+
+    @Test
+    fun `performNetworkRequestsConcurrently should return Error when network request fails`() =
+        runTest {
+            val responseDelay = 1000L
+            val fakeApi = FakeErrorApi(responseDelay)
+            val viewModel = PerformNetworkRequestsConcurrentlyViewModel(fakeApi)
+            viewModel.observe()
+
+            Assert.assertTrue(receivedUiStates.isEmpty())
+
+            viewModel.performNetworkRequestsConcurrently()
+
+            advanceUntilIdle()
+
+            Assert.assertEquals(
+                listOf(
+                    UiState.Loading,
+                    UiState.Error("Network Request Failed")
                 ),
                 receivedUiStates
             )
         }
 
-    private fun PerformNetworkRequestsConcurrentlyViewModel.observeViewModel() {
+    private fun PerformNetworkRequestsConcurrentlyViewModel.observe() {
         uiState().observeForever { uiState ->
-            uiState?.let {
+            if (uiState != null) {
                 receivedUiStates.add(uiState)
             }
         }
