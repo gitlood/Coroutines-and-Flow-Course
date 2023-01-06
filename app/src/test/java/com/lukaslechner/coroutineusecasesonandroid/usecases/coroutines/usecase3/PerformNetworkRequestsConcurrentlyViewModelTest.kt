@@ -21,8 +21,9 @@ class PerformNetworkRequestsConcurrentlyViewModelTest : ViewModelTestBaseClass()
             //Given
             val responseDelay = 1000L
             val fakeSuccessApi = FakeSuccessApi(responseDelay)
-            val viewModel = PerformNetworkRequestsConcurrentlyViewModel(fakeSuccessApi)
-            observeViewModel(viewModel)
+            val viewModel = PerformNetworkRequestsConcurrentlyViewModel(fakeSuccessApi).apply {
+                observeViewModel()
+            }
 
             //When
             viewModel.performNetworkRequestsSequentially()
@@ -51,8 +52,9 @@ class PerformNetworkRequestsConcurrentlyViewModelTest : ViewModelTestBaseClass()
             //Given
             val responseDelay = 1000L
             val fakeSuccessApi = FakeSuccessApi(responseDelay)
-            val viewModel = PerformNetworkRequestsConcurrentlyViewModel(fakeSuccessApi)
-            observeViewModel(viewModel)
+            val viewModel = PerformNetworkRequestsConcurrentlyViewModel(fakeSuccessApi).apply {
+                observeViewModel()
+            }
 
             //When
             viewModel.performNetworkRequestsConcurrently()
@@ -74,8 +76,8 @@ class PerformNetworkRequestsConcurrentlyViewModelTest : ViewModelTestBaseClass()
             )
         }
 
-    private fun observeViewModel(viewModel: PerformNetworkRequestsConcurrentlyViewModel) {
-        viewModel.uiState().observeForever { uiState ->
+    private fun PerformNetworkRequestsConcurrentlyViewModel.observeViewModel() {
+        uiState().observeForever { uiState ->
             uiState?.let {
                 receivedUiStates.add(uiState)
             }
