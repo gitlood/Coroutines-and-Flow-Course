@@ -51,6 +51,7 @@ class FlowUseCase2ViewModel(
                 stock.country == "United States"
             }
         }
+        .cancellable() // checks if flow is still active
         //4
         .map { stockList ->
             stockList.filter { stock ->
